@@ -42,6 +42,20 @@ func ReadHandler(c echo.Context) error {
 		return c.JSON(http.StatusOK, ReadRes{
 			OneData: rs,
 		})
+	case "level":
+		content.Content_lock()
+		defer content.Content_unlock()
+		rs := content.Content_getbigju(self)
+		return c.JSON(http.StatusOK, ReadRes{
+			OneData: rs,
+		})
+	case "bigju":
+		content.Content_lock()
+		defer content.Content_unlock()
+		rs := content.Content_getbigju(self)
+		return c.JSON(http.StatusOK, ReadRes{
+			OneData: rs,
+		})
 	default:
 		return c.JSON(http.StatusOK, ReadRes{
 			Msg: "bad",

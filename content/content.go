@@ -3,6 +3,7 @@ package content
 import (
 	"bufio"
 	"fmt"
+	"math"
 	"os"
 
 	"strings"
@@ -14,6 +15,7 @@ import (
 
 var (
 	MaxLevel uint8 = 3
+	JuLevel  uint8 = 2
 )
 
 var FILENAME = "content.gob"
@@ -22,12 +24,15 @@ var lo sync.Mutex
 type Two struct {
 	UP    uint64
 	Level uint8
+	BigJu uint8 // 大菊线个数
 	DOWN  []uint64
 }
 type Content struct {
 	LastSync int64
 	NowIdx   uint64
 	WriteOK  bool
+	MaxDepth uint64 // 最大深度
+	MaxWidth uint64 // 最大宽度
 	//////////////
 	All map[uint64]*Two
 }
@@ -49,7 +54,7 @@ func (con *Content) CheckMaxLevel(uid uint64) bool {
 	}
 	/////////
 	if v, ok := con.All[uid]; ok {
-		return v.Level <= MaxLevel
+		return v.Level < MaxLevel
 	}
 	return false
 }
@@ -83,8 +88,39 @@ func (con *Content) LevelUp(self uint64) bool {
 	if !con.CheckMaxLevel(self) {
 		return false
 	}
+	con.NowIdx++
 	v := con.All[self]
 	v.Level++
+	{
+		// dajuxian
+		if v.Level == JuLevel && v.BigJu == 0 { // 我已成橘, 且我无线
+			if v.UP != 0 {
+				_up := con.All[v.UP]
+				_up.BigJu++
+				if _up.BigJu == 0 {
+					_up.BigJu--
+				}
+				for {
+					if _up.BigJu == 1 && _up.UP != 0 {
+						_up = con.All[_up.UP]
+						_up.BigJu++
+						if _up.BigJu == 0 {
+							_up.BigJu--
+						}
+					} else {
+						break
+					}
+				}
+			}
+		}
+	}
+	{
+		if time.Now().Unix()-g_content.LastSync >= 500 && con.WriteOK {
+			// should sync
+			// up 值如果是math.MAXUINT64，则说明，这一条消息是 升级，不是注册
+			Content_Record(self, math.MaxUint64, con.NowIdx)
+		}
+	}
 	return true
 }
 
@@ -98,6 +134,7 @@ func (con *Content) Init() {
 }
 
 func Content_Init() {
+	g_content = nil
 	g_content = new(Content)
 	g_content.Init()
 	// 从 file 里 load 回来
@@ -117,7 +154,11 @@ func Content_Init() {
 		if idx <= g_content.NowIdx {
 			continue
 		}
-		g_content.Add(self, up)
+		if up == math.MaxUint64 {
+			g_content.LevelUp(self)
+		} else {
+			g_content.Add(self, up)
+		}
 	}
 	g_content.WriteOK = true
 	file.Close()
@@ -136,6 +177,15 @@ beginf:
 	f.WriteString(fmt.Sprintf("%v %v %v\n", self, up, nowidx))
 	f.Close()
 	// fmt.Println(tool.NowMs())
+}
+
+func Content_flushall() {
+	os.Remove(FILENAME)
+	Content_Init()
+}
+
+func Content_sta() (uint64, uint64, uint64) {
+	return uint64(len(g_content.All)), g_content.MaxDepth, g_content.MaxWidth
 }
 
 func Content_lock() {
@@ -176,6 +226,25 @@ func Content_getoneup(self uint64) uint64 {
 	}
 	if v, ok := g_content.All[self]; ok {
 		return v.UP
+	}
+	return 0
+}
+
+func Content_getbigju(self uint64) uint64 {
+	if !g_content.CheckEx(self) {
+		return 0
+	}
+	if v, ok := g_content.All[self]; ok {
+		return uint64(v.BigJu)
+	}
+	return 0
+}
+func Content_getlevel(self uint64) uint64 {
+	if !g_content.CheckEx(self) {
+		return 0
+	}
+	if v, ok := g_content.All[self]; ok {
+		return uint64(v.Level)
 	}
 	return 0
 }
