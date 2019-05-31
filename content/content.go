@@ -12,12 +12,17 @@ import (
 	"github.com/gitbufenshuo/relation/tool"
 )
 
+var (
+	MaxLevel uint8 = 3
+)
+
 var FILENAME = "content.gob"
 var lo sync.Mutex
 
 type Two struct {
-	UP   uint64
-	DOWN []uint64
+	UP    uint64
+	Level uint8
+	DOWN  []uint64
 }
 type Content struct {
 	LastSync int64
@@ -35,6 +40,16 @@ func (con *Content) CheckEx(uid uint64) bool {
 	//////////////////////
 	if _, ok := con.All[uid]; ok {
 		return true
+	}
+	return false
+}
+func (con *Content) CheckMaxLevel(uid uint64) bool {
+	if len(con.All) == 0 {
+		return false
+	}
+	/////////
+	if v, ok := con.All[uid]; ok {
+		return v.Level <= MaxLevel
 	}
 	return false
 }
@@ -61,6 +76,18 @@ func (con *Content) Add(self, up uint64) bool {
 	return true
 }
 
+func (con *Content) LevelUp(self uint64) bool {
+	if !con.CheckEx(self) {
+		return false
+	}
+	if !con.CheckMaxLevel(self) {
+		return false
+	}
+	v := con.All[self]
+	v.Level++
+	return true
+}
+
 ////////
 var g_content *Content
 
@@ -68,7 +95,6 @@ func (con *Content) Init() {
 	con.All = make(map[uint64]*Two)
 	con.All[0] = new(Two)
 	con.All[0].UP = 0
-
 }
 
 func Content_Init() {
@@ -118,9 +144,15 @@ func Content_lock() {
 func Content_unlock() {
 	lo.Unlock()
 }
+
 func Content_add(self, up uint64) bool {
 	return g_content.Add(self, up)
 }
+
+func Content_levelup(self uint64) bool {
+	return g_content.LevelUp(self)
+}
+
 func Content_getallup(self uint64) []uint64 {
 	if !g_content.CheckEx(self) {
 		return nil
