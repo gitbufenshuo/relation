@@ -45,7 +45,7 @@ func ReadHandler(c echo.Context) error {
 	case "level":
 		content.Content_lock()
 		defer content.Content_unlock()
-		rs := content.Content_getbigju(self)
+		rs := content.Content_getlevel(self)
 		return c.JSON(http.StatusOK, ReadRes{
 			OneData: rs,
 		})
