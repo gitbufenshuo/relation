@@ -82,15 +82,19 @@ func (con *Content) Add(self, up uint64) bool {
 	return true
 }
 
-func (con *Content) LevelUp(self uint64) bool {
+func (con *Content) LevelUp(self, nowdeng uint64) bool {
 	if !con.CheckEx(self) {
 		return false
 	}
 	if !con.CheckMaxLevel(self) {
 		return false
 	}
-	con.NowIdx++
 	v := con.All[self]
+	if v.Level != uint8(nowdeng) {
+		// 可以幂等了
+		return false
+	}
+	con.NowIdx++
 	v.Level++
 	{
 		// dajuxian
@@ -156,7 +160,8 @@ func Content_Init() {
 			continue
 		}
 		if up == math.MaxUint64 {
-			g_content.LevelUp(self)
+			nowdeng := Content_getlevel(self)
+			g_content.LevelUp(self, nowdeng)
 		} else {
 			g_content.Add(self, up)
 		}
@@ -200,8 +205,8 @@ func Content_add(self, up uint64) bool {
 	return g_content.Add(self, up)
 }
 
-func Content_levelup(self uint64) bool {
-	return g_content.LevelUp(self)
+func Content_levelup(self, nowdeng uint64) bool {
+	return g_content.LevelUp(self, nowdeng)
 }
 
 func Content_getallup(self uint64) []uint64 {

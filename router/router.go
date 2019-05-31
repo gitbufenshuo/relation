@@ -7,7 +7,7 @@ import (
 
 func Init(e *echo.Echo) {
 	e.GET("/relation/add/:self/:up", handler.AddHandler)
-	e.GET("/relation/levelup/:self", handler.LevelUpHandler)
+	e.GET("/relation/levelup/:self/:nowdeng", handler.LevelUpHandler)
 	e.GET("/relation/read/:what/:self", handler.ReadHandler)
 	///////////////////////////////////////////////////////
 	e.GET("/relation/flushall", handler.FlushAllHandler)

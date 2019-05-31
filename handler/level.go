@@ -19,9 +19,20 @@ func LevelUpHandler(c echo.Context) error {
 			self = n
 		}
 	}
+	//
+	var nowdeng uint64
+	{
+		ss := c.Param("nowdeng")
+		if n, err := strconv.ParseUint(ss, 10, 64); err != nil {
+			return c.JSON(http.StatusOK, "bad")
+		} else {
+			nowdeng = n
+		}
+	}
+	//
 	content.Content_lock()
 	defer content.Content_unlock()
-	if res := content.Content_levelup(self); res {
+	if res := content.Content_levelup(self, nowdeng); res {
 		return c.JSON(http.StatusOK, ReadRes{})
 	} else {
 		return c.JSON(http.StatusOK, ReadRes{
