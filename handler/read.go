@@ -35,6 +35,13 @@ func ReadHandler(c echo.Context) error {
 		return c.JSON(http.StatusOK, ReadRes{
 			Data: rs,
 		})
+	case "alldzj":
+		content.Content_lock()
+		defer content.Content_unlock()
+		rs := content.Content_getalldzj(self)
+		return c.JSON(http.StatusOK, ReadRes{
+			Data: rs,
+		})
 	case "oneup":
 		content.Content_lock()
 		defer content.Content_unlock()
@@ -53,6 +60,13 @@ func ReadHandler(c echo.Context) error {
 		content.Content_lock()
 		defer content.Content_unlock()
 		rs := content.Content_getbigju(self)
+		return c.JSON(http.StatusOK, ReadRes{
+			OneData: rs,
+		})
+	case "zhixia":
+		content.Content_lock()
+		defer content.Content_unlock()
+		rs := content.Content_getzhixia(self)
 		return c.JSON(http.StatusOK, ReadRes{
 			OneData: rs,
 		})

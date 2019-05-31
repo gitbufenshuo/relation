@@ -72,6 +72,7 @@ func (con *Content) Add(self, up uint64) bool {
 	con.All[self] = t
 	downlist := con.All[up].DOWN
 	downlist = append(downlist, self)
+	con.All[up].DOWN = downlist
 	{
 		if time.Now().Unix()-g_content.LastSync >= 500 && con.WriteOK {
 			// should sync
@@ -220,6 +221,13 @@ func Content_getallup(self uint64) []uint64 {
 	}
 	return res
 }
+func Content_getalldzj(self uint64) []uint64 {
+	if !g_content.CheckEx(self) {
+		return nil
+	}
+	v := g_content.All[self]
+	return []uint64{uint64(v.Level), uint64(len(v.DOWN)), uint64(v.BigJu)}
+}
 func Content_getoneup(self uint64) uint64 {
 	if !g_content.CheckEx(self) {
 		return 0
@@ -245,6 +253,15 @@ func Content_getlevel(self uint64) uint64 {
 	}
 	if v, ok := g_content.All[self]; ok {
 		return uint64(v.Level)
+	}
+	return 0
+}
+func Content_getzhixia(self uint64) uint64 {
+	if !g_content.CheckEx(self) {
+		return 0
+	}
+	if v, ok := g_content.All[self]; ok {
+		return uint64(len(v.DOWN))
 	}
 	return 0
 }
