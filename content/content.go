@@ -106,7 +106,7 @@ func (con *Content) LevelUp(self, nowdeng uint64) bool {
 					_up.BigJu--
 				}
 				for {
-					if _up.BigJu == 1 && _up.UP != 0 {
+					if _up.BigJu == 1 && _up.Level < JuLevel && _up.UP != 0 {
 						_up = con.All[_up.UP]
 						_up.BigJu++
 						if _up.BigJu == 0 {
